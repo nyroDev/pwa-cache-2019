@@ -1,5 +1,5 @@
 // Service worker logic
-const version = 1;
+const version = 2;
 
 const cachePrefix = 'mysite-v';
 
@@ -8,6 +8,22 @@ const cacheName = cachePrefix + version;
 self.addEventListener('install', function(event) {
     // Be careful with skipWaiting, as client will directly use new SW but started to load on old version
     self.skipWaiting();
+});
+
+self.addEventListener('activate', function (event) {
+    event.waitUntil(
+        caches.keys().then(function (cacheNames) {
+            return Promise.all(
+                cacheNames.filter(function (curCacheName) {
+                    // Return true if you want to remove this cache,
+                    // but remember that caches are shared across the whole origin
+                    return curCacheName.startsWith(cachePrefix) && curCacheName !== cacheName;
+                }).map(function (curCacheName) {
+                    return caches.delete(curCacheName);
+                })
+            );
+        })
+    );
 });
 
 self.addEventListener('fetch', function (event) {
