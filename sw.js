@@ -1,5 +1,5 @@
 // Service worker logic
-const version = 5;
+const version = 6;
 
 const LAYOUTURL = self.registration.scope + 'layout.html';
 const layoutedUrls = 'page';
@@ -22,12 +22,7 @@ const cacheNameDynamic = cacheName + '-dynamic';
 self.addEventListener('install', function(event) {
     event.waitUntil(
         caches.open(cacheNameStatic).then(function(cache) {
-            return cache.addAll(assets).then(function() {
-                // Be careful with skipWaiting, as client will directly use new SW but started to load on old version
-                // We keep it here for now as version 5 or above don't have the posMessage call in place
-                // This should stay in place until w're sure all clients have update to the last version...
-                self.skipWaiting();
-            });
+            return cache.addAll(assets);
         })
     );
 });
