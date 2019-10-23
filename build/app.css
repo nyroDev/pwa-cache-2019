@@ -3,3 +3,16 @@ body {
     color: #333;
     background: #ddd;
 }
+.refreshBut {
+    position: fixed;
+    left: 50%;
+    transform: translate(-50%, 0);
+    bottom: 5px;
+    background: #333;
+    color: #fff;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 120%;
+}
