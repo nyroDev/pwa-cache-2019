@@ -1,9 +1,13 @@
 // Service worker logic
-const version = 3;
+const version = 4;
+
+const LAYOUTURL = self.registration.scope + 'layout.html';
+const layoutedUrls = 'page';
 
 // List all assets that should be in cache all time
 const assets = [
     self.registration.scope, // To add index.html as / URL
+    LAYOUTURL,
     'build/app.css',
     'build/app.js',
 ];
@@ -43,6 +47,68 @@ self.addEventListener('activate', function (event) {
 });
 
 self.addEventListener('fetch', function (event) {
+    if (event.request.url.startsWith(self.registration.scope)) {
+        // We're sur to be in our scope, maybe we should layout the request ?
+        const localUrl = event.request.url.substr(self.registration.scope.length);
+        if (localUrl.startsWith(layoutedUrls)) {
+            const localJsonUrl = localUrl.replace('.html', '.json');
+
+            event.respondWith(
+                caches.open(cacheNameDynamic).then(function(cache) {
+                    return cache.match(localJsonUrl);
+                }).then(function(cachedResponse) {
+                    if (cachedResponse) {
+                        // We have a json cached, use it
+                        return cachedResponse;
+                    }
+
+                    return Promise.all([
+                        fetch(localJsonUrl),
+                        caches.open(cacheNameDynamic),
+                    ]).then(function(fetchRets) {
+                        const response = fetchRets[0];
+                        const cache = fetchRets[1];
+
+                        // Save json response for later use
+                        cache.put(localJsonUrl, response.clone());
+
+                        return response;
+                    });
+                }).then(function(response) {
+                    return Promise.all([
+                        response.json(),
+                        caches.open(cacheNameStatic).then(function(cache) {
+                            return cache.match(LAYOUTURL)
+                                .then(function(responseTpl) {
+                                    return responseTpl.text().then(function(text) {
+                                        return {
+                                            response: responseTpl,
+                                            text
+                                        };
+                                    });
+                                });
+                        })
+                    ]);
+                }).then(function(rets) {
+                    const content = rets[0];
+                    const tplObj = rets[1];
+                    const html = tplObj.text
+                        .replace('%TITLE%', content.title)
+                        .replace('%CONTENT%', content.content)
+                    ;
+                
+                    return new Response(html, {
+                        status: 200,
+                        type: tplObj.response.type,
+                        headers: tplObj.response.headers  // To return exactly what's come from server
+                    });
+                })
+            );
+
+            return;
+        }
+    }
+
     event.respondWith(
         caches.match(event.request).then(function (response) {
             if (response) {
