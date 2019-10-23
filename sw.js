@@ -1,5 +1,5 @@
 // Service worker logic
-const version = 6;
+const version = 7;
 
 const LAYOUTURL = self.registration.scope + 'layout.html';
 const layoutedUrls = 'page';

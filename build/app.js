@@ -8,8 +8,8 @@ if ('serviceWorker' in navigator) {
             refreshButton.href = '#';
             refreshButton.className = 'refreshBut';
             refreshButton.innerText = 'Refresh';
-            
-            refreshButton.addEventListener('click', function(e) {
+
+            refreshButton.addEventListener('click', function (e) {
                 resolve();
             });
 
@@ -77,5 +77,39 @@ if ('serviceWorker' in navigator) {
         }
         refreshing = true;
         window.location.reload();
+    });
+
+
+    window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        var deferredPrompt = e;
+
+        const installButton = document.createElement('a');
+        installButton.href = '#';
+        installButton.className = 'installBut';
+        installButton.innerText = 'Install as App';
+
+        installButton.addEventListener('click', function(e) {
+            deferredPrompt.prompt();
+
+            // Follow what the user has done with the prompt.
+            deferredPrompt.userChoice.then(function (choiceResult) {
+                console.log(choiceResult.outcome);
+
+                if (choiceResult.outcome == 'dismissed') {
+                    // @todo show him an alert here?
+                    console.log('User cancelled home screen install');
+                } else {
+                    console.log('User added to home screen');
+                }
+
+                installButton.parentNode.removeChild(installButton);
+
+                // We no longer need the prompt.  Clear it up.
+                deferredPrompt = null;
+            });
+        });
+
+        document.body.appendChild(installButton);
     });
 };
